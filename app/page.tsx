@@ -23,11 +23,11 @@ export default function HomePage() {
     <main className="min-h-screen overflow-hidden bg-[#F7F8F2] text-[#17221B]">
       <section className="relative px-6 pb-20 md:px-12 md:pt-16 lg:px-20">
 
-        {/* <img
+        <img
           className="mx-auto -mt-24 h-72"
           src="/fasal.png"
           alt=""
-        /> */}
+        />
 
         <div className="relative mx-auto ">
           {/* Status Badge */}

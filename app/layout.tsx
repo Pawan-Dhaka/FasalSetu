@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/Components/Navbar";
 import { Footer } from "@/Components/Footer";
-
+import Providers from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,10 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FasalSetu : AI Powered Marketplace",
   description: "Made for Farmers and peoples.",
-  icons:{
-    icon:"/favicon.svg"
-  }
-  
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -31,11 +30,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        {children}
-        <Footer />
-        </body>
+        <Providers>
+          <Navbar />
+          {children}
+          <Footer />
+        </Providers>
+      </body>
     </html>
   );
 }
-

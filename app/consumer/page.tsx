@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  ArrowRight,
   ChevronDown,
   ChevronRight,
   Heart,
@@ -13,145 +12,48 @@ import {
   SlidersHorizontal,
   Star,
   Truck,
-  UserRound,
   X,
+  Minus,
+  Plus,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type Farmer = {
+  id: number;
+  name: string;
+  mobile: string;
+  address: string | null;
+  village: string | null;
+  city: string | null;
+  state: string | null;
+  pincode: string | null;
+};
+
+type DBProduct = {
+  id: number;
+  name: string;
+  category: string;
+  quality: string | null;
+  quantity: string | number;
+  pricePerKg: string | number;
+  createdAt: string;
+  farmer: Farmer;
+};
 
 type Product = {
   id: number;
   name: string;
   category: string;
+  quality: string | null;
   farmer: string;
+  farmerId: number;
   location: string;
   price: number;
-  oldPrice?: number;
-  unit: string;
-  rating: number;
-  reviews: number;
-  distance: string;
+  quantity: number;
   emoji: string;
+  organic: boolean;
   badge?: string;
-  organic?: boolean;
 };
-
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Fresh Tomatoes",
-    category: "Vegetables",
-    farmer: "Ramesh Kumar",
-    location: "Jaipur",
-    price: 32,
-    oldPrice: 38,
-    unit: "kg",
-    rating: 4.8,
-    reviews: 124,
-    distance: "12 km",
-    emoji: "🍅",
-    badge: "Best Seller",
-  },
-  {
-    id: 2,
-    name: "Farm Potatoes",
-    category: "Vegetables",
-    farmer: "Sita Devi",
-    location: "Sanganer",
-    price: 25,
-    oldPrice: 30,
-    unit: "kg",
-    rating: 4.9,
-    reviews: 86,
-    distance: "16 km",
-    emoji: "🥔",
-    badge: "Fresh Today",
-  },
-  {
-    id: 3,
-    name: "Red Onions",
-    category: "Vegetables",
-    farmer: "Mohan Lal",
-    location: "Chomu",
-    price: 28,
-    unit: "kg",
-    rating: 4.7,
-    reviews: 72,
-    distance: "21 km",
-    emoji: "🧅",
-    organic: true,
-  },
-  {
-    id: 4,
-    name: "Fresh Carrots",
-    category: "Vegetables",
-    farmer: "Anita Sharma",
-    location: "Amer",
-    price: 40,
-    oldPrice: 46,
-    unit: "kg",
-    rating: 4.8,
-    reviews: 61,
-    distance: "18 km",
-    emoji: "🥕",
-    badge: "Popular",
-  },
-  {
-    id: 5,
-    name: "Green Capsicum",
-    category: "Vegetables",
-    farmer: "Rakesh Singh",
-    location: "Kukas",
-    price: 48,
-    unit: "kg",
-    rating: 4.6,
-    reviews: 48,
-    distance: "25 km",
-    emoji: "🫑",
-  },
-  {
-    id: 6,
-    name: "Farm Spinach",
-    category: "Leafy Greens",
-    farmer: "Kamla Devi",
-    location: "Jaipur",
-    price: 22,
-    unit: "bunch",
-    rating: 4.9,
-    reviews: 93,
-    distance: "9 km",
-    emoji: "🥬",
-    badge: "Picked Today",
-    organic: true,
-  },
-  {
-    id: 7,
-    name: "Fresh Mangoes",
-    category: "Fruits",
-    farmer: "Vijay Meena",
-    location: "Dausa",
-    price: 85,
-    oldPrice: 100,
-    unit: "kg",
-    rating: 4.8,
-    reviews: 117,
-    distance: "32 km",
-    emoji: "🥭",
-    badge: "Seasonal",
-  },
-  {
-    id: 8,
-    name: "Fresh Cauliflower",
-    category: "Vegetables",
-    farmer: "Rajendra Gurjar",
-    location: "Bagru",
-    price: 35,
-    unit: "kg",
-    rating: 4.7,
-    reviews: 55,
-    distance: "24 km",
-    emoji: "🥦",
-  },
-];
 
 const categories = [
   { name: "All", emoji: "🌱" },
@@ -160,45 +62,261 @@ const categories = [
   { name: "Leafy Greens", emoji: "🥬" },
   { name: "Dairy", emoji: "🥛" },
   { name: "Grains", emoji: "🌾" },
+  { name: "Pulses", emoji: "🫘" },
+  { name: "Spices", emoji: "🌶️" },
+  { name: "Other", emoji: "📦" },
 ];
 
+function getEmoji(name: string, category: string) {
+  const text = `${name} ${category}`.toLowerCase();
+
+  if (text.includes("tomato")) return "🍅";
+  if (text.includes("potato")) return "🥔";
+  if (text.includes("onion")) return "🧅";
+  if (text.includes("carrot")) return "🥕";
+  if (text.includes("capsicum")) return "🫑";
+  if (text.includes("spinach")) return "🥬";
+  if (text.includes("mango")) return "🥭";
+  if (text.includes("banana")) return "🍌";
+  if (text.includes("apple")) return "🍎";
+  if (text.includes("cauliflower")) return "🥦";
+  if (text.includes("milk")) return "🥛";
+  if (text.includes("wheat")) return "🌾";
+  if (text.includes("rice")) return "🌾";
+  if (text.includes("dal")) return "🫘";
+  if (text.includes("pulse")) return "🫘";
+  if (text.includes("chilli")) return "🌶️";
+  if (text.includes("pepper")) return "🌶️";
+
+  const categoryText = category.toLowerCase();
+
+  if (categoryText.includes("vegetable")) return "🥕";
+  if (categoryText.includes("fruit")) return "🍎";
+  if (categoryText.includes("leaf")) return "🥬";
+  if (categoryText.includes("dairy")) return "🥛";
+  if (categoryText.includes("grain")) return "🌾";
+  if (categoryText.includes("pulse")) return "🫘";
+  if (categoryText.includes("spice")) return "🌶️";
+
+  return "🌱";
+}
+
+function getLocation(farmer: Farmer) {
+  return (
+    farmer.city ||
+    farmer.village ||
+    farmer.state ||
+    "Local Farm"
+  );
+}
+
+function mapProduct(product: DBProduct): Product {
+  const quantity = Number(product.quantity);
+
+  const organic =
+    product.quality?.toLowerCase() === "organic";
+
+  const createdAt = new Date(product.createdAt);
+
+  const ageInHours =
+    (Date.now() - createdAt.getTime()) /
+    (1000 * 60 * 60);
+
+  let badge: string | undefined;
+
+  if (ageInHours < 24) {
+    badge = "Fresh Today";
+  } else if (quantity < 20) {
+    badge = "Limited Stock";
+  }
+
+  return {
+    id: product.id,
+    name: product.name,
+    category: product.category,
+    quality: product.quality,
+    farmer: product.farmer.name,
+    farmerId: product.farmer.id,
+    location: getLocation(product.farmer),
+    price: Number(product.pricePerKg),
+    quantity,
+    emoji: getEmoji(product.name, product.category),
+    organic,
+    badge,
+  };
+}
+
 export default function MarketplacePage() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
-  const [cartCount, setCartCount] = useState(2);
-  const [favorites, setFavorites] = useState<number[]>([]);
   const [sort, setSort] = useState("Recommended");
-  const [showFilters, setShowFilters] = useState(false);
+
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [cartQuantities, setCartQuantities] =
+    useState<Record<number, number>>({});
+
+  const [cartCount, setCartCount] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+  const [cartLoading, setCartLoading] =
+    useState<number | null>(null);
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const [showFilters, setShowFilters] =
+    useState(false);
+
+  const [organicOnly, setOrganicOnly] =
+    useState(false);
+
+  async function loadProducts() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch("/api/products", {
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Failed to load products"
+        );
+      }
+
+      const mapped = (data.products || []).map(
+        (product: DBProduct) => mapProduct(product)
+      );
+
+      setProducts(mapped);
+    } catch (error) {
+      console.error("LOAD_PRODUCTS_ERROR:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load products"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadCart() {
+    try {
+      const response = await fetch("/api/cart", {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        setCartCount(0);
+        setCartQuantities({});
+        return;
+      }
+
+      const data = await response.json();
+
+      setCartCount(Number(data.count || 0));
+
+      const quantities: Record<number, number> = {};
+
+      for (const item of data.items || []) {
+        quantities[item.productId] = Number(
+          item.quantity
+        );
+      }
+
+      setCartQuantities(quantities);
+    } catch (error) {
+      console.error("LOAD_CART_ERROR:", error);
+    }
+  }
+
+  useEffect(() => {
+    loadProducts();
+    loadCart();
+
+    const saved = localStorage.getItem(
+      "fasalsetu-favorites"
+    );
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+
+        if (Array.isArray(parsed)) {
+          setFavorites(parsed);
+        }
+      } catch {
+        localStorage.removeItem(
+          "fasalsetu-favorites"
+        );
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "fasalsetu-favorites",
+      JSON.stringify(favorites)
+    );
+  }, [favorites]);
 
   const filteredProducts = useMemo(() => {
     let result = products.filter((product) => {
       const matchesCategory =
-        category === "All" || product.category === category;
+        category === "All" ||
+        product.category === category;
 
-      const searchText = search.toLowerCase().trim();
+      const text = search.toLowerCase().trim();
 
       const matchesSearch =
-        product.name.toLowerCase().includes(searchText) ||
-        product.farmer.toLowerCase().includes(searchText) ||
-        product.category.toLowerCase().includes(searchText);
+        !text ||
+        product.name.toLowerCase().includes(text) ||
+        product.farmer.toLowerCase().includes(text) ||
+        product.category.toLowerCase().includes(text) ||
+        product.location.toLowerCase().includes(text);
 
-      return matchesCategory && matchesSearch;
+      const matchesOrganic =
+        !organicOnly || product.organic;
+
+      return (
+        matchesCategory &&
+        matchesSearch &&
+        matchesOrganic
+      );
     });
 
     if (sort === "Price: Low to High") {
-      result = [...result].sort((a, b) => a.price - b.price);
+      result = [...result].sort(
+        (a, b) => a.price - b.price
+      );
     }
 
     if (sort === "Price: High to Low") {
-      result = [...result].sort((a, b) => b.price - a.price);
+      result = [...result].sort(
+        (a, b) => b.price - a.price
+      );
     }
 
-    if (sort === "Rating") {
-      result = [...result].sort((a, b) => b.rating - a.rating);
+    if (sort === "Stock") {
+      result = [...result].sort(
+        (a, b) => b.quantity - a.quantity
+      );
     }
 
     return result;
-  }, [category, search, sort]);
+  }, [
+    products,
+    category,
+    search,
+    sort,
+    organicOnly,
+  ]);
 
   function toggleFavorite(id: number) {
     setFavorites((current) =>
@@ -208,20 +326,226 @@ export default function MarketplacePage() {
     );
   }
 
-  function clearSearch() {
+  async function addToCart(product: Product) {
+    try {
+      setCartLoading(product.id);
+      setError("");
+      setSuccess("");
+
+      const currentQuantity =
+        cartQuantities[product.id] || 0;
+
+      if (currentQuantity >= product.quantity) {
+        throw new Error(
+          `Only ${product.quantity} kg available`
+        );
+      }
+
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: 1,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = "/consumer/login";
+          return;
+        }
+
+        throw new Error(
+          data.error || "Failed to add product"
+        );
+      }
+
+      await loadCart();
+
+      setSuccess(`${product.name} added to cart`);
+
+      setTimeout(() => {
+        setSuccess("");
+      }, 2000);
+    } catch (error) {
+      console.error("ADD_TO_CART_ERROR:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to add product"
+      );
+
+      setTimeout(() => {
+        setError("");
+      }, 2500);
+    } finally {
+      setCartLoading(null);
+    }
+  }
+
+  async function updateQuantity(
+    product: Product,
+    change: number
+  ) {
+    const current =
+      cartQuantities[product.id] || 0;
+
+    const next = current + change;
+
+    if (next < 0) return;
+
+    try {
+      setCartLoading(product.id);
+      setError("");
+
+      if (next === 0 && current > 0) {
+        const cartResponse = await fetch("/api/cart", {
+          cache: "no-store",
+        });
+
+        const cartData =
+          await cartResponse.json();
+
+        const item = (cartData.items || []).find(
+          (item: { productId: number }) =>
+            item.productId === product.id
+        );
+
+        if (item) {
+          const response = await fetch(
+            `/api/cart?itemId=${item.id}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.error ||
+                "Failed to remove item"
+            );
+          }
+        }
+
+        await loadCart();
+        return;
+      }
+
+      if (next > product.quantity) {
+        throw new Error(
+          `Only ${product.quantity} kg available`
+        );
+      }
+
+      if (current === 0 && next > 0) {
+        const response = await fetch("/api/cart", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            productId: product.id,
+            quantity: next,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              "Failed to add product"
+          );
+        }
+      } else {
+        const cartResponse = await fetch(
+          "/api/cart",
+          {
+            cache: "no-store",
+          }
+        );
+
+        const cartData =
+          await cartResponse.json();
+
+        const item = (cartData.items || []).find(
+          (item: { productId: number }) =>
+            item.productId === product.id
+        );
+
+        if (!item) {
+          throw new Error(
+            "Cart item not found"
+          );
+        }
+
+        const response = await fetch("/api/cart", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            itemId: item.id,
+            quantity: next,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              "Failed to update cart"
+          );
+        }
+      }
+
+      await loadCart();
+    } catch (error) {
+      console.error(
+        "UPDATE_CART_QUANTITY_ERROR:",
+        error
+      );
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update cart"
+      );
+
+      setTimeout(() => {
+        setError("");
+      }, 2500);
+    } finally {
+      setCartLoading(null);
+    }
+  }
+
+  function clearFilters() {
     setSearch("");
     setCategory("All");
+    setOrganicOnly(false);
+    setSort("Recommended");
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F8F3] pb-20 text-[#17221B] sm:pb-0">
+    <main className="min-h-screen bg-[#F7F8F3] text-[#17221B]">
 
+      <div className="mx-auto max-w-[1500px] px-4 pb-16 sm:px-8 lg:px-10">
 
-      <div className="mx-auto max-w-[1500px] px-4  sm:px-8 lg:px-10">
+        {/* =====================================================
+            HERO
+        ====================================================== */}
 
-        {/* HERO */}
-
-        <section className="relative overflow-hidden rounded-[25px] bg-[#EAF4E9] px-5 py-7 sm:rounded-[30px] sm:px-10 lg:px-12 lg:py-10">
+        <section className="relative mt-5 overflow-hidden rounded-[25px] bg-[#EAF4E9] px-5 py-7 sm:rounded-[30px] sm:px-10 lg:px-12 lg:py-10">
 
           <div className="absolute -right-20 -top-28 h-80 w-80 rounded-full bg-green-300/20 blur-3xl" />
 
@@ -236,39 +560,40 @@ export default function MarketplacePage() {
                 Direct from local farmers
               </div>
 
-              <h2 className="max-w-2xl text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl">
+              <h1 className="max-w-2xl text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl">
                 Fresh food.
                 <br />
-                <span className="text-[#1F7A4D]">Fair prices.</span>{" "}
+
+                <span className="text-[#1F7A4D]">
+                  Fair prices.
+                </span>{" "}
                 Real farmers.
-              </h2>
+              </h1>
 
               <p className="mt-4 max-w-xl text-sm leading-6 text-gray-600 sm:text-base">
-                Shop fresh produce directly from farmers around Jaipur.
-                Know where your food comes from and help farmers earn more.
+                Shop fresh produce directly
+                from farmers and discover
+                quality food at transparent
+                prices.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
 
-                <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold shadow-sm">
-                  <span>🌱</span>
-                  Farm fresh
+                <div className="rounded-xl bg-white px-3 py-2 text-xs font-bold shadow-sm">
+                  🌱 Farm fresh
                 </div>
 
-                <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold shadow-sm">
-                  <span>💰</span>
-                  Fair pricing
+                <div className="rounded-xl bg-white px-3 py-2 text-xs font-bold shadow-sm">
+                  💰 Fair pricing
                 </div>
 
-                <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold shadow-sm">
-                  <span>🤝</span>
-                  Support farmers
+                <div className="rounded-xl bg-white px-3 py-2 text-xs font-bold shadow-sm">
+                  🤝 Support farmers
                 </div>
 
               </div>
-            </div>
 
-            {/* Hero visual */}
+            </div>
 
             <div className="relative hidden min-h-[230px] lg:block">
 
@@ -288,51 +613,66 @@ export default function MarketplacePage() {
                 🥔
               </div>
 
-              <div className="absolute bottom-4 left-20 flex items-center gap-3 rounded-2xl border border-white bg-white/90 p-3 shadow-xl backdrop-blur">
+              
 
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#DDEFE3] text-lg">
-                  👨‍🌾
-                </div>
-
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
-                    Today&apos;s produce
-                  </p>
-
-                  <p className="text-xs font-black">
-                    From local farms
-                  </p>
-                </div>
-
-              </div>
             </div>
 
           </div>
         </section>
 
-        {/* CATEGORY NAV */}
+        {/* =====================================================
+            SEARCH
+        ====================================================== */}
+
+        <section className="mt-6">
+
+          <div className="relative">
+
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+
+            <input
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="Search vegetables, fruits, farmers..."
+              className="w-full rounded-2xl border border-gray-200 bg-white py-4 pl-11 pr-11 text-sm font-medium outline-none transition placeholder:text-gray-400 focus:border-[#1F7A4D] focus:ring-2 focus:ring-green-100"
+            />
+
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={17} />
+              </button>
+            )}
+
+          </div>
+
+        </section>
+
+        {/* =====================================================
+            CATEGORY
+        ====================================================== */}
 
         <section className="mt-7">
 
           <div className="mb-4 flex items-center justify-between">
 
             <div>
-              <h3 className="text-lg font-black">
+              <h2 className="text-lg font-black">
                 Shop by category
-              </h3>
+              </h2>
 
               <p className="mt-1 text-xs text-gray-500">
-                Fresh produce from farmers near you
+                Find exactly what you need
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setCategory("All")}
-              className="hidden text-xs font-bold text-[#1F7A4D] sm:block"
-            >
-              View all
-            </button>
 
           </div>
 
@@ -340,9 +680,11 @@ export default function MarketplacePage() {
 
             {categories.map((item) => (
               <button
-                type="button"
                 key={item.name}
-                onClick={() => setCategory(item.name)}
+                type="button"
+                onClick={() =>
+                  setCategory(item.name)
+                }
                 className={`flex min-w-fit items-center gap-2 rounded-2xl border px-4 py-3 text-xs font-bold transition ${
                   category === item.name
                     ? "border-[#1F7A4D] bg-[#1F7A4D] text-white shadow-md shadow-green-900/10"
@@ -360,31 +702,35 @@ export default function MarketplacePage() {
           </div>
         </section>
 
-        {/* TRUST STRIP */}
+        {/* =====================================================
+            TRUST
+        ====================================================== */}
 
         <section className="mt-5 grid gap-3 sm:grid-cols-3">
 
           <TrustItem
             icon="🌱"
             title="Direct from farmers"
-            text="Fewer unnecessary intermediaries"
+            text="Buy closer to the source"
           />
 
           <TrustItem
             icon="💰"
             title="Transparent prices"
-            text="Know where your money goes"
+            text="Clear price per kilogram"
           />
 
           <TrustItem
             icon="🚚"
-            title="Local delivery"
-            text="Fresh produce delivered to you"
+            title="Local produce"
+            text="Fresh products from nearby farms"
           />
 
         </section>
 
-        {/* PRODUCTS */}
+        {/* =====================================================
+            PRODUCTS
+        ====================================================== */}
 
         <section className="mt-10">
 
@@ -393,7 +739,7 @@ export default function MarketplacePage() {
             <div>
 
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1F7A4D]">
-                Recommended for you
+                Marketplace
               </p>
 
               <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
@@ -401,7 +747,9 @@ export default function MarketplacePage() {
               </h2>
 
               <p className="mt-1 text-xs text-gray-500">
-                {filteredProducts.length} products available near you
+                {loading
+                  ? "Finding fresh produce..."
+                  : `${filteredProducts.length} products available`}
               </p>
 
             </div>
@@ -410,11 +758,13 @@ export default function MarketplacePage() {
 
               <button
                 type="button"
-                onClick={() => setShowFilters((value) => !value)}
+                onClick={() =>
+                  setShowFilters((value) => !value)
+                }
                 className={`flex items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-xs font-bold transition ${
                   showFilters
                     ? "border-[#1F7A4D] text-[#1F7A4D]"
-                    : "border-gray-200 text-gray-600 hover:border-green-200 hover:text-[#1F7A4D]"
+                    : "border-gray-200 text-gray-600 hover:border-green-200"
                 }`}
               >
                 <SlidersHorizontal size={15} />
@@ -425,13 +775,22 @@ export default function MarketplacePage() {
 
                 <select
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  className="h-full appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-4 pr-9 text-xs font-bold text-gray-600 outline-none hover:border-green-200"
+                  onChange={(e) =>
+                    setSort(e.target.value)
+                  }
+                  className="appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-4 pr-9 text-xs font-bold text-gray-600 outline-none"
                 >
                   <option>Recommended</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Rating</option>
+
+                  <option>
+                    Price: Low to High
+                  </option>
+
+                  <option>
+                    Price: High to Low
+                  </option>
+
+                  <option>Stock</option>
                 </select>
 
                 <ChevronDown
@@ -440,56 +799,108 @@ export default function MarketplacePage() {
                 />
 
               </div>
-            </div>
-          </div>
 
-          {/* FILTER PANEL */}
+            </div>
+
+          </div>
 
           {showFilters && (
             <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
 
                 <button
                   type="button"
-                  className="rounded-xl bg-green-50 px-4 py-2 text-xs font-bold text-green-700"
+                  onClick={() =>
+                    setOrganicOnly((value) => !value)
+                  }
+                  className={`rounded-xl px-4 py-2 text-xs font-bold ${
+                    organicOnly
+                      ? "bg-[#1F7A4D] text-white"
+                      : "border border-gray-200 text-gray-600"
+                  }`}
                 >
-                  Within 10 km
+                  🌱 Organic
                 </button>
 
                 <button
                   type="button"
-                  className="rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600"
+                  onClick={() =>
+                    setSort("Price: Low to High")
+                  }
+                  className="rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600 hover:border-green-200"
                 >
-                  Organic
+                  Lowest price
                 </button>
 
                 <button
                   type="button"
-                  className="rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600"
+                  onClick={() =>
+                    setSort("Price: High to Low")
+                  }
+                  className="rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600 hover:border-green-200"
                 >
-                  Available today
+                  Highest price
                 </button>
 
                 <button
                   type="button"
-                  className="rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600"
+                  onClick={clearFilters}
+                  className="rounded-xl bg-gray-50 px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100"
                 >
-                  Top rated
+                  Clear filters
                 </button>
 
               </div>
             </div>
           )}
 
-          {/* =====================================================
-              PRODUCT GRID
+          {error && (
+            <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-5 py-4">
 
-              IMPORTANT:
-              grid-cols-2 = ALWAYS 2 PRODUCTS ON MOBILE
-          ====================================================== */}
+              <p className="text-xs font-bold text-red-600">
+                {error}
+              </p>
 
-          {filteredProducts.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setError("");
+                  loadProducts();
+                  loadCart();
+                }}
+                className="rounded-lg bg-white px-3 py-2 text-[10px] font-bold text-red-600"
+              >
+                Retry
+              </button>
+
+            </div>
+          )}
+
+          {success && (
+            <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 px-5 py-4">
+              <p className="text-xs font-bold text-green-700">
+                ✓ {success}
+              </p>
+            </div>
+          )}
+
+          {loading ? (
+
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+
+              {Array.from({ length: 8 }).map(
+                (_, index) => (
+                  <div
+                    key={index}
+                    className="h-[390px] animate-pulse rounded-2xl border border-gray-200 bg-white sm:rounded-[24px]"
+                  />
+                )
+              )}
+
+            </div>
+
+          ) : filteredProducts.length > 0 ? (
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
 
@@ -497,9 +908,27 @@ export default function MarketplacePage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  favorite={favorites.includes(product.id)}
-                  onFavorite={() => toggleFavorite(product.id)}
-                  onAdd={() => setCartCount((count) => count + 1)}
+                  favorite={favorites.includes(
+                    product.id
+                  )}
+                  quantity={
+                    cartQuantities[product.id] || 0
+                  }
+                  loading={
+                    cartLoading === product.id
+                  }
+                  onFavorite={() =>
+                    toggleFavorite(product.id)
+                  }
+                  onAdd={() =>
+                    addToCart(product)
+                  }
+                  onIncrease={() =>
+                    updateQuantity(product, 1)
+                  }
+                  onDecrease={() =>
+                    updateQuantity(product, -1)
+                  }
                 />
               ))}
 
@@ -507,7 +936,7 @@ export default function MarketplacePage() {
 
           ) : (
 
-            <div className="mt-6 rounded-3xl border border-dashed border-gray-300 bg-white py-20 text-center">
+            <div className="mt-6 rounded-[28px] border border-dashed border-gray-300 bg-white py-20 text-center">
 
               <div className="text-5xl">
                 🔎
@@ -523,10 +952,10 @@ export default function MarketplacePage() {
 
               <button
                 type="button"
-                onClick={clearSearch}
+                onClick={clearFilters}
                 className="mt-5 rounded-xl bg-[#1F7A4D] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#17633E]"
               >
-                Clear search
+                Clear filters
               </button>
 
             </div>
@@ -534,7 +963,9 @@ export default function MarketplacePage() {
 
         </section>
 
-        {/* PRICE TRANSPARENCY */}
+        {/* =====================================================
+            BOTTOM INFO
+        ====================================================== */}
 
         <section className="mt-12 overflow-hidden rounded-[28px] border border-green-100 bg-white">
 
@@ -547,79 +978,48 @@ export default function MarketplacePage() {
               </div>
 
               <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-green-300">
-                Our promise
+                FasalSetu
               </p>
 
               <h2 className="mt-2 max-w-md text-2xl font-black leading-tight sm:text-3xl">
-                Know exactly where your money goes.
+                Better connections between
+                farmers and consumers.
               </h2>
 
               <p className="mt-4 max-w-md text-sm leading-6 text-green-100/70">
-                Every product shows a transparent price breakdown so you can
-                see how your purchase supports the farmer.
+                Discover produce directly from
+                farmers with clear pricing and
+                available stock.
               </p>
-
-              <button
-                type="button"
-                className="mt-6 flex items-center gap-2 text-xs font-bold text-white hover:text-green-200"
-              >
-                Learn about our pricing
-                <ArrowRight size={15} />
-              </button>
 
             </div>
 
             <div className="p-7 sm:p-9">
 
               <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                Example
+                Marketplace benefits
               </p>
 
-              <div className="mt-4 flex items-end justify-between gap-4">
+              <div className="mt-5 space-y-4">
 
-                <div>
-                  <p className="text-2xl font-black">
-                    Fresh Tomatoes
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    1 kg • Direct from Ramesh&apos;s farm
-                  </p>
-                </div>
-
-                <p className="text-2xl font-black text-[#1F7A4D]">
-                  ₹32
-                </p>
-
-              </div>
-
-              <div className="mt-6 space-y-4">
-
-                <PriceLine
-                  label="Farmer"
-                  value="₹27"
-                  percentage="84%"
-                  width="84%"
+                <Benefit
+                  icon="🌱"
+                  title="Fresh produce"
+                  text="Products listed directly by farmers"
                 />
 
-                <PriceLine
-                  label="Local logistics"
-                  value="₹3"
-                  percentage="9%"
-                  width="9%"
+                <Benefit
+                  icon="💰"
+                  title="Clear pricing"
+                  text="See the actual price per kg"
                 />
 
-                <PriceLine
-                  label="Platform"
-                  value="₹2"
-                  percentage="7%"
-                  width="7%"
+                <Benefit
+                  icon="🤝"
+                  title="Direct connection"
+                  text="Know who is growing your food"
                 />
 
-              </div>
-
-              <div className="mt-6 rounded-xl bg-green-50 p-3 text-center text-xs font-bold text-green-700">
-                🌱 More of your payment reaches the farmer
               </div>
 
             </div>
@@ -627,7 +1027,9 @@ export default function MarketplacePage() {
           </div>
         </section>
 
-        {/* FOOTER CTA */}
+        {/* =====================================================
+            FOOTER
+        ====================================================== */}
 
         <section className="py-14 text-center">
 
@@ -640,7 +1042,8 @@ export default function MarketplacePage() {
           </h2>
 
           <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
-            Buy directly from farmers, enjoy fresher produce, and help build a
+            Buy directly from farmers, enjoy
+            fresher produce, and help build a
             fairer food supply chain.
           </p>
 
@@ -648,54 +1051,65 @@ export default function MarketplacePage() {
 
       </div>
 
-      {/* MOBILE BOTTOM NAV */}
+      {/* =====================================================
+          FLOATING CART
+      ====================================================== */}
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 px-5 py-3 backdrop-blur-xl sm:hidden">
-
-        <div className="flex items-center justify-around">
-
-          <Link
-            href="/consumer"
-            className="flex flex-col items-center gap-1 text-[#1F7A4D]"
-          >
-            <Leaf size={19} />
-            <span className="text-[9px] font-bold">
-              Home
-            </span>
-          </Link>
-
-          <button
-            type="button"
-            className="flex flex-col items-center gap-1 text-gray-400"
-          >
-            <Heart size={19} />
-            <span className="text-[9px] font-bold">
-              Saved
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className="flex flex-col items-center gap-1 text-gray-400"
-          >
-            <ShoppingCart size={19} />
-            <span className="text-[9px] font-bold">
-              Cart
-            </span>
-          </button>
+      {cartCount > 0 && (
+        <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
 
           <Link
-            href="/profile"
-            className="flex flex-col items-center gap-1 text-gray-400"
+            href="/cart"
+            className="group flex min-w-[250px] items-center gap-3 rounded-2xl bg-[#173D2A] p-3 text-white shadow-2xl shadow-black/20 transition duration-300 hover:-translate-y-1 hover:bg-[#1F7A4D] sm:min-w-[290px] sm:p-4"
           >
-            <UserRound size={19} />
-            <span className="text-[9px] font-bold">
-              Profile
-            </span>
+
+            {/* CART ICON */}
+
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10">
+
+              <ShoppingCart
+                size={23}
+                className="text-white"
+              />
+
+              <span className="absolute -right-1.5 -top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#A8D96C] px-1.5 text-[10px] font-black text-[#173D2A] shadow-lg">
+                {cartCount}
+              </span>
+
+            </div>
+
+            {/* CART INFO */}
+
+            <div className="min-w-0 flex-1">
+
+              <p className="text-[10px] font-bold uppercase tracking-wider text-green-200">
+                Your Cart
+              </p>
+
+              <p className="mt-0.5 text-sm font-black sm:text-base">
+                {cartCount === 1
+                  ? "1 item in cart"
+                  : `${cartCount} items in cart`}
+              </p>
+
+              <p className="mt-0.5 text-[9px] text-green-100/60">
+                Click to view your cart
+              </p>
+
+            </div>
+
+            {/* ARROW */}
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#173D2A] transition group-hover:translate-x-0.5">
+
+              <ChevronRight size={18} />
+
+            </div>
+
           </Link>
 
         </div>
-      </div>
+      )}
 
     </main>
   );
@@ -708,18 +1122,26 @@ export default function MarketplacePage() {
 function ProductCard({
   product,
   favorite,
+  quantity,
+  loading,
   onFavorite,
   onAdd,
+  onIncrease,
+  onDecrease,
 }: {
   product: Product;
   favorite: boolean;
+  quantity: number;
+  loading: boolean;
   onFavorite: () => void;
   onAdd: () => void;
+  onIncrease: () => void;
+  onDecrease: () => void;
 }) {
+  const inCart = quantity > 0;
+
   return (
     <article className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-green-100 hover:shadow-xl sm:rounded-[24px]">
-
-      {/* Product Visual */}
 
       <div className="relative flex h-36 items-center justify-center overflow-hidden bg-[#F2F5EC] sm:h-52">
 
@@ -728,7 +1150,7 @@ function ProductCard({
         <div className="absolute -bottom-12 -left-10 h-32 w-32 rounded-full bg-green-100/50" />
 
         {product.badge && (
-          <span className="absolute left-2 top-2 z-10 max-w-[75%] truncate rounded-full bg-white px-2 py-1 text-[7px] font-black text-[#1F7A4D] shadow-sm sm:left-4 sm:top-4 sm:px-2.5 sm:py-1.5 sm:text-[9px]">
+          <span className="absolute left-2 top-2 z-10 rounded-full bg-white px-2 py-1 text-[7px] font-black text-[#1F7A4D] shadow-sm sm:left-4 sm:top-4 sm:px-2.5 sm:py-1.5 sm:text-[9px]">
             {product.badge}
           </span>
         )}
@@ -740,8 +1162,6 @@ function ProductCard({
           </span>
         )}
 
-        {/* Favorite */}
-
         <button
           type="button"
           onClick={onFavorite}
@@ -750,20 +1170,15 @@ function ProductCard({
               ? "text-red-500"
               : "text-gray-400 hover:text-red-400"
           }`}
-          aria-label={
-            favorite
-              ? `Remove ${product.name} from favorites`
-              : `Add ${product.name} to favorites`
-          }
         >
           <Heart
             size={14}
-            fill={favorite ? "currentColor" : "none"}
+            fill={
+              favorite ? "currentColor" : "none"
+            }
             className="sm:h-[17px] sm:w-[17px]"
           />
         </button>
-
-        {/* Product Emoji */}
 
         <span className="relative z-10 text-[62px] drop-shadow-sm transition duration-500 group-hover:scale-110 sm:text-[95px]">
           {product.emoji}
@@ -771,13 +1186,9 @@ function ProductCard({
 
       </div>
 
-      {/* Product Info */}
-
       <div className="p-3 sm:p-5">
 
-        {/* Name + Price */}
-
-        <div className="flex items-start justify-between gap-1.5">
+        <div className="flex items-start justify-between gap-2">
 
           <div className="min-w-0">
 
@@ -794,102 +1205,149 @@ function ProductCard({
           <div className="shrink-0 text-right">
 
             <p className="text-sm font-black text-[#1F7A4D] sm:text-lg">
-              ₹{product.price}
+              ₹
+              {product.price.toLocaleString(
+                "en-IN"
+              )}
             </p>
 
-            {product.oldPrice && (
-              <p className="text-[8px] text-gray-400 line-through sm:text-[10px]">
-                ₹{product.oldPrice}
-              </p>
-            )}
+            <p className="text-[7px] text-gray-400 sm:text-[9px]">
+              / kg
+            </p>
 
           </div>
+
         </div>
 
-        {/* Farmer */}
-
         <Link
-          href={`/farmer-profile/${product.id}`}
+          href={`/farmer-profile/${product.farmerId}`}
           className="mt-3 flex min-w-0 items-center gap-1.5 rounded-xl transition hover:bg-gray-50 sm:mt-4 sm:gap-2"
         >
 
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#DDEFE3] text-[11px] sm:h-8 sm:w-8 sm:text-sm">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#DDEFE3] text-xs sm:h-8 sm:w-8 sm:text-sm">
             👨‍🌾
           </div>
 
           <div className="min-w-0 flex-1">
 
-            <p className="truncate text-[15px] font-bold text-gray-700 sm:text-[20px]">
+            <p className="truncate text-[10px] font-bold text-gray-700 sm:text-xs">
               {product.farmer}
             </p>
 
-            <p className="flex items-center gap-0.5 truncate text-[7px] text-gray-400 sm:gap-1 sm:text-[20px]">
-              <MapPin size={7} />
-              {product.location} • {product.distance}
+            <p className="flex items-center gap-1 truncate text-[7px] text-gray-400 sm:text-[9px]">
+              <MapPin size={8} />
+              {product.location}
             </p>
 
           </div>
 
           <ChevronRight
             size={12}
-            className="shrink-0 text-gray-300 sm:h-[14px] sm:w-[14px]"
+            className="shrink-0 text-gray-300"
           />
 
         </Link>
 
-        {/* Rating */}
+        <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
 
-        <div className="mt-3 flex items-center justify-between sm:mt-4">
-
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1">
 
             <Star
-              size={10}
-              className="fill-[#E6A92E] text-[#E6A92E] sm:h-[13px] sm:w-[13px]"
+              size={11}
+              className="text-gray-300"
             />
 
-            <span className="text-[8px] font-black sm:text-[10px]">
-              {product.rating}
-            </span>
-
-            <span className="text-[7px] text-gray-400 sm:text-[9px]">
-              ({product.reviews})
+            <span className="text-[8px] font-bold text-gray-400 sm:text-[9px]">
+              New
             </span>
 
           </div>
 
-          <span className="text-[7px] font-medium text-gray-400 sm:text-[9px]">
-            per {product.unit}
-          </span>
+          <div className="flex items-center gap-1 text-[7px] font-bold text-gray-400 sm:text-[9px]">
+
+            <Truck
+              size={11}
+              className="text-[#1F7A4D]"
+            />
+
+            {product.quantity} kg available
+
+          </div>
 
         </div>
 
-        {/* CTA */}
+        <Link
+          href={`/marketplace/${product.id}`}
+          className="mt-3 flex h-9 w-full items-center justify-center rounded-xl border border-gray-200 text-[9px] font-bold text-gray-600 transition hover:border-[#1F7A4D] hover:bg-green-50 hover:text-[#1F7A4D] sm:h-10 sm:text-xs"
+        >
+          View product details
+        </Link>
 
-        <div className="mt-3 flex gap-1.5 sm:mt-4 sm:gap-2">
-
-          <Link
-            href={`/marketplace/${product.id}`}
-            className="flex h-8 min-w-0 flex-1 items-center justify-center rounded-lg border border-gray-200 px-1 text-[8px] font-bold text-gray-600 transition hover:border-[#1F7A4D] hover:bg-green-50 hover:text-[#1F7A4D] sm:h-10 sm:rounded-xl sm:px-3 sm:text-xs"
-          >
-            <span className="truncate">
-              View details
-            </span>
-          </Link>
+        {!inCart ? (
 
           <button
             type="button"
             onClick={onAdd}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1F7A4D] text-white transition hover:bg-[#17633E] sm:h-10 sm:w-10 sm:rounded-xl"
-            aria-label={`Add ${product.name} to cart`}
+            disabled={loading}
+            className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#1F7A4D] text-[9px] font-black text-white shadow-md shadow-green-900/10 transition hover:bg-[#17633E] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:text-xs"
           >
-            <ShoppingCart
-              size={13}
-              className="sm:h-4 sm:w-4"
-            />
+            {loading ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Adding...
+              </>
+            ) : (
+              <>
+                <ShoppingCart size={15} />
+                Add to Cart
+              </>
+            )}
           </button>
 
-        </div>
+        ) : (
+
+          <div className="mt-2 rounded-xl bg-[#EAF4E9] p-1.5">
+
+            <div className="flex items-center justify-between">
+
+              <button
+                type="button"
+                onClick={onDecrease}
+                disabled={loading}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#1F7A4D] shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Minus size={14} />
+              </button>
+
+              <div className="text-center">
+
+                <p className="text-[8px] font-bold uppercase tracking-wide text-[#1F7A4D]">
+                  In Cart
+                </p>
+
+                <p className="text-sm font-black text-[#173D2A]">
+                  {quantity} kg
+                </p>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={onIncrease}
+                disabled={
+                  loading ||
+                  quantity >= product.quantity
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F7A4D] text-white shadow-sm transition hover:bg-[#17633E] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Plus size={14} />
+              </button>
+
+            </div>
+
+          </div>
+
+        )}
 
       </div>
     </article>
@@ -927,54 +1385,40 @@ function TrustItem({
         </p>
 
       </div>
+
     </div>
   );
 }
 
 /* ===============================================================
-   PRICE LINE
+   BENEFIT
 ================================================================ */
 
-function PriceLine({
-  label,
-  value,
-  percentage,
-  width,
+function Benefit({
+  icon,
+  title,
+  text,
 }: {
-  label: string;
-  value: string;
-  percentage: string;
-  width: string;
+  icon: string;
+  title: string;
+  text: string;
 }) {
   return (
-    <div>
+    <div className="flex items-center gap-3 rounded-2xl bg-[#F7F9F5] p-4">
 
-      <div className="mb-2 flex items-center justify-between">
-
-        <div>
-
-          <span className="text-xs font-bold">
-            {label}
-          </span>
-
-          <span className="ml-2 text-[10px] text-gray-400">
-            {percentage}
-          </span>
-
-        </div>
-
-        <span className="text-xs font-black">
-          {value}
-        </span>
-
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg shadow-sm">
+        {icon}
       </div>
 
-      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+      <div>
 
-        <div
-          className="h-full rounded-full bg-[#1F7A4D]"
-          style={{ width }}
-        />
+        <p className="text-xs font-black">
+          {title}
+        </p>
+
+        <p className="mt-1 text-[10px] text-gray-500">
+          {text}
+        </p>
 
       </div>
 
